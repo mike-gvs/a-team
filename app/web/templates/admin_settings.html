@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Settings · ATeam{% endblock %}
+{% block content %}
+<section class="gvs-narrow">
+  <h1>Settings</h1>
+  <p>Admin only. Staff and viewers cannot open this page.</p>
+  <dl class="gvs-dl">
+    <dt>Deployment</dt><dd>{{ runtime.deployment_name }}</dd>
+    <dt>Model</dt><dd>{{ runtime.model_backend }}</dd>
+    <dt>Require login</dt><dd>{{ runtime.require_login }}</dd>
+    <dt>Monthly cap</dt><dd>${{ runtime.monthly_cap_usd }}</dd>
+    <dt>Version</dt><dd>{{ health.version }} / {{ health.image_tag }}</dd>
+  </dl>
+  <p><a href="/admin">Back to admin</a></p>
+</section>
+{% endblock %}

@@ -1,0 +1,4 @@
+/* gvs-ui@0.1.0 — product accent only. Color and spacing tokens live in gvs-ui. */
+:root {
+  --gvs-accent: #edaa4b;
+}

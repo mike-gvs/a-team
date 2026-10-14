@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Admin · ATeam{% endblock %}
+{% block content %}
+<section>
+  <h1>Admin</h1>
+  <p>Users, roles, and machine API keys. Password reset uses the email connector (stub sink until you switch it to live).</p>
+  <p>Spend this month: ${{ '%.4f'|format(spend) }} {% if capped %}<span class="gvs-badge gvs-badge-warn">capped</span>{% endif %}</p>
+  <div class="gvs-split">
+    <div class="gvs-card">
+      <h2>Users</h2>
+      <table class="gvs-table">
+        <thead><tr><th>Username</th><th>Email</th><th>Role</th></tr></thead>
+        <tbody>
+          {% for u in users %}
+          <tr><td>{{ u.username }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td></tr>
+          {% else %}
+          <tr><td colspan="3">No users yet (login may be off).</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <form id="user-form" class="gvs-form">
+        <label class="gvs-field">Username <input name="username" required></label>
+        <label class="gvs-field">Email <input name="email" type="email" required></label>
+        <label class="gvs-field">Password <input name="password" type="password" required></label>
+        <label class="gvs-field">Role
+          <select name="role"><option value="staff">staff</option><option value="viewer">viewer</option><option value="admin">admin</option></select>
+        </label>
+        <button class="gvs-btn gvs-btn-primary" type="submit">Add user</button>
+      </form>
+    </div>
+    <div class="gvs-card">
+      <h2>API keys</h2>
+      <table class="gvs-table">
+        <thead><tr><th>Name</th><th>Prefix</th></tr></thead>
+        <tbody>
+          {% for k in keys %}
+          <tr><td>{{ k.name }}</td><td><code>{{ k.prefix }}…</code></td></tr>
+          {% else %}
+          <tr><td colspan="2">No keys yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <form id="key-form" class="gvs-form">
+        <label class="gvs-field">Key name <input name="name" value="machine" required></label>
+        <button class="gvs-btn gvs-btn-primary" type="submit">Create key</button>
+      </form>
+      <p id="key-once" class="gvs-help" hidden></p>
+      <p><a href="/admin/settings">Settings</a> (admin only)</p>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/admin.js"></script>
+{% endblock %}

@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: pip install ruff==0.8.4
+      - name: Ruff
+        run: ruff check app tests scripts
+
+  test:
+    runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT: test
+      MODEL_BACKEND: stub
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: pip install -r requirements-dev.txt
+      - name: Tests (stub only)
+        run: pytest -q
+      - name: Skills
+        run: |
+          python scripts/validate_skills.py
+          VALIDATE_CMD="$(command -v skills-ref || command -v agentskills)"
+          test -n "$VALIDATE_CMD"
+          for d in skills/*/ ; do
+            "$VALIDATE_CMD" validate "$d"
+          done
+      - name: Package checks
+        run: |
+          test -f LICENSE
+          test -f deploy/DEPLOY_RECORD.md
+          ! grep -E "ANTHROPIC|MODEL" config/connectors/default.yaml
+          ! grep -E "TWILIO|POSTMARK" config/models/default.yaml
+          ! grep -nE "You are|system prompt" -r app
+          grep -q "gvs-ui@" app/web/templates/base.html
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks
+        env:
+          GITLEAKS_VERSION: "8.24.3"
+        run: |
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -o /tmp/gitleaks.tgz
+          tar -xzf /tmp/gitleaks.tgz -C /tmp gitleaks
+          sudo install /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+      - name: Run gitleaks
+        run: gitleaks detect --source . --no-banner --verbose

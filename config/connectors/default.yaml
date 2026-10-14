@@ -1,0 +1,14 @@
+# Connectors start off and in stub mode. Secrets stay in .env / the wizard secret store.
+connectors:
+  email:
+    enabled: false
+    mode: stub
+    secrets:
+      - POSTMARK_API_TOKEN
+  sms:
+    enabled: false
+    mode: stub
+    secrets:
+      - TWILIO_ACCOUNT_SID
+      - TWILIO_AUTH_TOKEN
+      - TWILIO_FROM_NUMBER

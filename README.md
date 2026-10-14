@@ -66,6 +66,10 @@ Run this package on your own machine with the steps above. If you would rather h
 
 The setup wizard is where you pick the AI provider. **Prompts and data go to whichever provider you pick.** Each provider handles that data under its own terms. The stub provider stays on your machine and makes no network calls. Anthropic is the first live provider; others plug in through the same provider interface. Continuous integration and the default install use the stub only.
 
+## Data and privacy
+
+Working with health records? When you run a project yourself, you choose an AI provider and host that fit your compliance needs. Our hosting and builds don't process patient health information.
+
 ## What's stubbed
 
 | Piece | Default | Live option |

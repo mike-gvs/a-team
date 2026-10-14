@@ -20,6 +20,7 @@ def test_readme_skeleton_order():
         "## 5-minute setup",
         "## Run it yourself, or have Gold Valley host and manage it",
         "## AI provider and data handling",
+        "## Data and privacy",
         "## What's stubbed",
         "## Configuration",
         "## Architecture",
@@ -51,6 +52,14 @@ def test_readme_lists_credentials_from_env_example():
 def test_product_name_is_ateam_one_word():
     assert "ATeam" in README
     assert "AI Team" not in README
+
+
+def test_data_and_privacy_health_records_copy():
+    assert (
+        "Working with health records? When you run a project yourself, you choose "
+        "an AI provider and host that fit your compliance needs. Our hosting and "
+        "builds don't process patient health information."
+    ) in README
 
 
 def test_gvs_ui_pin():

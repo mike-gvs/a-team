@@ -1,0 +1,4 @@
+Inter is licensed under the SIL Open Font License, Version 1.1.
+Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter).
+These woff2 files are the latin subset shipped with @fontsource/inter 5.1.1.
+They are served from this package. The app does not load fonts from a CDN.

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ATeam{% endblock %}</title>
+  <!-- gvs-ui@{{ gvs_ui }} -->
+  <link rel="stylesheet" href="/gvs-ui/{{ gvs_ui }}/css/fonts.css">
+  <link rel="stylesheet" href="/gvs-ui/{{ gvs_ui }}/css/tokens.css">
+  <link rel="stylesheet" href="/gvs-ui/{{ gvs_ui }}/icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/gvs-ui/{{ gvs_ui }}/css/components.css">
+  <link rel="stylesheet" href="/static/css/theme.css">
+  {% if runtime %}
+  <style>:root { --gvs-accent: {{ runtime.accent_color }}; }</style>
+  {% endif %}
+</head>
+<body class="gvs-body">
+  <a class="gvs-skip" href="#main">Skip to content</a>
+  <header class="gvs-header">
+    <div class="gvs-header-inner">
+      <a class="gvs-brand" href="/">
+        <img src="{{ runtime.logo_path if runtime else '/static/img/logo.png' }}" alt="Gold Valley Solutions" class="gvs-logo">
+        <span class="gvs-brand-name">{{ runtime.brand_name if runtime else 'ATeam' }}</span>
+      </a>
+      <nav class="gvs-nav" aria-label="Main">
+        {% if runtime and runtime.setup_complete %}
+        <a href="/">Home</a>
+        <a href="/admin">Admin</a>
+        {% if user %}
+        <form method="post" action="/logout" class="gvs-inline"><button class="gvs-btn gvs-btn-ghost" type="submit">Log out</button></form>
+        {% elif runtime.require_login %}
+        <a class="gvs-btn gvs-btn-ghost" href="/login">Log in</a>
+        {% endif %}
+        {% endif %}
+        <button class="gvs-theme-toggle" type="button" data-theme-toggle aria-label="Toggle theme"><i class="bi bi-moon"></i></button>
+      </nav>
+    </div>
+  </header>
+  {% if login_off %}
+  <div class="gvs-banner" role="status">Login is off — single-user demo mode.</div>
+  {% endif %}
+  <main id="main" class="gvs-main">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="gvs-footer">
+    <p>ATeam · a Gold Valley Solutions package · MIT License</p>
+    <p><a href="https://www.goldvalleysolutions.com">goldvalleysolutions.com</a></p>
+  </footer>
+  <script src="/gvs-ui/{{ gvs_ui }}/js/theme.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

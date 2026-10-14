@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ runtime.brand_name }} · ATeam{% endblock %}
+{% block content %}
+<section class="gvs-home">
+  <div class="gvs-agent-card gvs-card">
+    <p class="gvs-kicker"><i class="bi bi-person-workspace"></i> Digital employee</p>
+    <h1>Scout</h1>
+    <p class="gvs-badge gvs-badge-ok">inbox-clerk · {{ runtime.model_backend }}</p>
+    <p>Scout drafts replies for the fictional shop Maple Street Books. Scout never sends mail. Change the skill file to retune tone without rebuilding.</p>
+  </div>
+  <div class="gvs-chat gvs-card" aria-label="Chat with Scout">
+    <div class="gvs-chat-log" id="chat-log">
+      <div class="gvs-msg gvs-msg-agent">Scout here — Maple Street Books inbox. Paste a customer note and I will draft a reply.</div>
+    </div>
+    <form id="chat-form" class="gvs-chat-form">
+      <label class="gvs-sr" for="chat-input">Message</label>
+      <textarea id="chat-input" rows="3" required placeholder="Customer asked if you have the cedar trail map in paperback…"></textarea>
+      <button class="gvs-btn gvs-btn-primary" type="submit">Send a message</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/app.js"></script>
+{% endblock %}

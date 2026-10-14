@@ -1,0 +1,20 @@
+# Model backends and per-role limits. Secrets stay in .env / the wizard secret store.
+# Stub is the default ($0, no network). Anthropic is the first live provider.
+backend: stub
+monthly_cap_usd: 0
+roles:
+  default:
+    model: stub-echo
+    max_tokens: 1024
+  inbox-clerk:
+    model: stub-echo
+    max_tokens: 512
+providers:
+  stub:
+    kind: stub
+    model: stub-echo
+  anthropic:
+    kind: anthropic
+    model: claude-sonnet-4-5
+    secret: ANTHROPIC_API_KEY
+    max_tokens: 1024

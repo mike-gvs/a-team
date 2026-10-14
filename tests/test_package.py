@@ -1,0 +1,166 @@
+import re
+
+from app.settings import REPO_ROOT
+
+README = (REPO_ROOT / "README.md").read_text()
+
+
+def test_license_and_copyright():
+    text = (REPO_ROOT / "LICENSE").read_text()
+    assert "MIT License" in text
+    assert "Copyright (c) 2026 Gold Valley Solutions" in text
+
+
+def test_readme_skeleton_order():
+    headings = re.findall(r"^## .+$", README, flags=re.M)
+    expected = [
+        "## What it does",
+        "## Screenshot",
+        "## Prerequisites",
+        "## 5-minute setup",
+        "## Run it yourself, or have Gold Valley host and manage it",
+        "## AI provider and data handling",
+        "## Data and privacy",
+        "## Your data",
+        "## What's stubbed",
+        "## Configuration",
+        "## Architecture",
+        "## Profiles and RAM",
+        "## Backups",
+        "## Support",
+        "## License",
+    ]
+    positions = [README.find(h) for h in expected]
+    assert all(p >= 0 for p in positions), headings
+    assert positions == sorted(positions)
+    prereq = README.find("## Prerequisites")
+    quick = README.find("## 5-minute setup")
+    assert prereq < quick
+
+
+def test_readme_lists_credentials_from_env_example():
+    env = (REPO_ROOT / ".env.example").read_text()
+    creds = []
+    for line in env.splitlines():
+        if "# credential" in line and "=" in line:
+            name = line.split("=", 1)[0].strip()
+            creds.append(name)
+    assert creds
+    for name in creds:
+        assert name in README
+
+
+def test_product_name_is_ateam_one_word():
+    assert "ATeam" in README
+    assert "AI Team" not in README
+
+
+def test_data_and_privacy_health_records_copy():
+    assert (
+        "Working with health records? When you run a project yourself, you choose "
+        "an AI provider and host that fit your compliance needs. Our hosting and "
+        "builds don't process patient health information."
+    ) in README
+
+
+def test_gvs_ui_pin():
+    html = (REPO_ROOT / "app" / "web" / "templates" / "base.html").read_text()
+    assert "gvs-ui@" in html
+    static_hit = False
+    for path in (REPO_ROOT / "app" / "web" / "templates").rglob("*.html"):
+        if "gvs-ui@" in path.read_text():
+            static_hit = True
+    assert static_hit
+
+
+def test_no_inline_prompts_in_app():
+    hits = []
+    for path in (REPO_ROOT / "app").rglob("*.py"):
+        text = path.read_text()
+        for i, line in enumerate(text.splitlines(), 1):
+            if "You are" in line or "system prompt" in line:
+                hits.append(f"{path}:{i}:{line}")
+    assert hits == []
+
+
+def test_deploy_record_fields():
+    path = REPO_ROOT / "deploy" / "DEPLOY_RECORD.md"
+    assert path.exists()
+    text = path.read_text()
+    for field in ("Client:", "URL:", "Host:", "Account owner:", "Support contact:", "Urgency:"):
+        assert field in text
+
+
+def test_release_kit():
+    kit = REPO_ROOT / "release-kit"
+    assert (kit / "problem.txt").exists()
+    assert (kit / "setup.md").exists()
+    media = list(kit.glob("*.png")) + list(kit.glob("*.gif")) + list(kit.glob("*.mp4"))
+    assert media, "release-kit needs a screenshot"
+
+
+def test_backup_docs():
+    text = (REPO_ROOT / "docs" / "backup.md").read_text()
+    assert "nightly" in text.lower()
+    assert "restore" in text.lower()
+    assert "make reset-data" in text
+    assert "make purge-logs" in text
+
+
+def test_your_data_lists_outbound_hosts():
+    section = README.split("## Your data", 1)[1].split("## ", 1)[0]
+    for host in (
+        "api.anthropic.com",
+        "api.postmarkapp.com",
+        "api.twilio.com",
+        "trycloudflare.com",
+    ):
+        assert host in section
+    assert "only if" in section.lower() or "Only if" in section
+    assert "make purge-logs" in section
+    assert "make reset-data" in section
+    assert "make clean" in section
+    assert "postgres-data" in section.lower() or "volume" in section.lower()
+
+
+def test_makefile_reset_and_purge():
+    text = (REPO_ROOT / "Makefile").read_text()
+    assert "reset-data:" in text
+    assert "down -v" in text
+    assert "Type yes to continue" in text
+    assert "purge-logs:" in text
+    assert "TRUNCATE spend_events, email_sink" in text
+    assert "clean:" in text
+    clean_block = text.split("clean:")[1].split("reset-data:")[0]
+    assert "down -v" in clean_block
+    assert "--remove-orphans" in text
+    assert "secrets.env" in text
+
+
+def test_inter_is_self_hosted():
+    base = (REPO_ROOT / "app" / "web" / "templates" / "base.html").read_text()
+    assert "fonts.google" not in base
+    assert "fonts.gstatic" not in base
+    assert "cdn.jsdelivr" not in base
+    assert "fonts.css" in base
+    fonts_css = (REPO_ROOT / "packages" / "gvs-ui" / "0.1.0" / "css" / "fonts.css").read_text()
+    assert "@font-face" in fonts_css
+    assert "font-family: Inter" in fonts_css
+    fonts_dir = REPO_ROOT / "packages" / "gvs-ui" / "0.1.0" / "fonts"
+    weights = [p.name for p in fonts_dir.glob("inter-latin-*-normal.woff2")]
+    for weight in ("300", "400", "500", "600", "700"):
+        assert f"inter-latin-{weight}-normal.woff2" in weights
+
+
+def test_ci_compose_job_curls_health():
+    text = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text()
+    assert "make up" in text
+    assert "curl -fsS http://127.0.0.1:8080/health" in text
+    assert "compose:" in text
+
+
+def test_wizard_js_runs_self_test_before_finish():
+    js = (REPO_ROOT / "static" / "js" / "setup.js").read_text()
+    assert "/api/setup/self-test" in js
+    assert "runSelfTest" in js
+    assert "submit" in js

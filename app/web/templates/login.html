@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Log in · ATeam{% endblock %}
+{% block content %}
+<section class="gvs-narrow gvs-card">
+  <h1>Log in</h1>
+  <form method="post" action="/login" class="gvs-form">
+    <label class="gvs-field">Username <input name="username" autocomplete="username" required></label>
+    <label class="gvs-field">Password <input name="password" type="password" autocomplete="current-password" required></label>
+    <button class="gvs-btn gvs-btn-primary" type="submit">Log in</button>
+  </form>
+  <p class="gvs-help">Forgot a password? Ask an admin to send a reset. In stub mode the message lands in the email sink, not a live inbox.</p>
+</section>
+{% endblock %}

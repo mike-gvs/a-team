@@ -1,0 +1,40 @@
+/* gvs-ui@0.1.0 tokens — Gold Valley Solutions brand. Do not override in product CSS except --gvs-accent. */
+:root {
+  --gvs-gold: #edaa4b;
+  --gvs-logo-orange: #ff914d;
+  --gvs-logo-gold: #ffbe59;
+  --gvs-dark: #0f172a;
+  --gvs-dark-2: #111827;
+  --gvs-light: #ffffff;
+  --gvs-text: #0f172a;
+  --gvs-text-on-dark: #e2e8f0;
+  --gvs-text-on-dark-muted: #cbd5e1;
+  --gvs-muted: #475569;
+  --gvs-accent: var(--gvs-gold);
+  --gvs-bg: #f8fafc;
+  --gvs-surface: #ffffff;
+  --gvs-border: #e2e8f0;
+  --gvs-danger: #b91c1c;
+  --gvs-ok: #166534;
+  --gvs-warn: #92400e;
+  --gvs-space-1: 0.25rem;
+  --gvs-space-2: 0.5rem;
+  --gvs-space-3: 0.75rem;
+  --gvs-space-4: 1rem;
+  --gvs-space-5: 1.5rem;
+  --gvs-space-6: 2rem;
+  --gvs-radius: 8px;
+  --gvs-font: Inter, "Segoe UI", system-ui, sans-serif;
+  --gvs-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --gvs-bg: #0f172a;
+  --gvs-surface: #111827;
+  --gvs-text: #e2e8f0;
+  --gvs-muted: #cbd5e1;
+  --gvs-border: #1f2937;
+  --gvs-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+  color-scheme: dark;
+}

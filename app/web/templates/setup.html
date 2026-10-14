@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Set up ATeam{% endblock %}
+{% block content %}
+<section class="gvs-wizard" aria-labelledby="wizard-title">
+  <div class="gvs-wizard-head">
+    <img src="/static/img/logo.png" alt="Gold Valley Solutions" class="gvs-logo gvs-logo-lg">
+    <h1 id="wizard-title">Set up ATeam</h1>
+    <p class="gvs-lead">Name this machine, pick a model, and turn on only what you need. Defaults stay on this computer and cost $0.</p>
+  </div>
+  <ol class="gvs-steps" aria-label="Setup steps">
+    <li class="is-active" data-step-tab="0">Name</li>
+    <li data-step-tab="1">Accounts</li>
+    <li data-step-tab="2">Model</li>
+    <li data-step-tab="3">Connectors</li>
+    <li data-step-tab="4">Branding</li>
+    <li data-step-tab="5">Spend cap</li>
+    <li data-step-tab="6">Self-test</li>
+  </ol>
+  <form id="setup-form" method="post" action="/setup" class="gvs-card">
+    <div class="gvs-step is-active" data-step="0">
+      <h2>Name this deployment</h2>
+      <label class="gvs-field">Deployment name
+        <input name="deployment_name" value="Maple Street Books" required>
+      </label>
+    </div>
+    <div class="gvs-step" data-step="1">
+      <h2>Accounts</h2>
+      <fieldset class="gvs-fieldset">
+        <legend>Require login</legend>
+        <label class="gvs-choice"><input type="radio" name="require_login" value="off" checked> Off — single-user demo (a banner will show)</label>
+        <label class="gvs-choice"><input type="radio" name="require_login" value="on"> On — create an admin now</label>
+      </fieldset>
+      <div id="admin-fields" class="gvs-admin-fields" hidden>
+        <label class="gvs-field">Admin username <input name="admin_username" autocomplete="username"></label>
+        <label class="gvs-field">Admin email <input name="admin_email" type="email" autocomplete="email"></label>
+        <label class="gvs-field">Admin password <input name="admin_password" type="password" autocomplete="new-password"></label>
+      </div>
+    </div>
+    <div class="gvs-step" data-step="2">
+      <h2>AI provider</h2>
+      <p>Prompts go to whichever provider you pick. Stub stays on this machine.</p>
+      <label class="gvs-choice"><input type="radio" name="model_backend" value="stub" checked> Stub (default, $0, no network)</label>
+      <label class="gvs-choice"><input type="radio" name="model_backend" value="anthropic"> Anthropic (first live provider)</label>
+      <label class="gvs-field">Anthropic API key (only if you picked Anthropic)
+        <input name="anthropic_api_key" type="password" autocomplete="off">
+      </label>
+    </div>
+    <div class="gvs-step" data-step="3">
+      <h2>Connectors</h2>
+      <p>Everything starts in stub mode. Paste a credential only if you switch a connector to live.</p>
+      <h3>Email</h3>
+      <label class="gvs-choice"><input type="checkbox" name="email_enabled"> Enable email</label>
+      <label class="gvs-field">Mode
+        <select name="email_mode"><option value="stub" selected>stub</option><option value="live">live</option></select>
+      </label>
+      <label class="gvs-field">POSTMARK_API_TOKEN <input name="postmark_api_token" type="password" autocomplete="off"></label>
+      <h3>SMS</h3>
+      <label class="gvs-choice"><input type="checkbox" name="sms_enabled"> Enable SMS</label>
+      <label class="gvs-field">Mode
+        <select name="sms_mode"><option value="stub" selected>stub</option><option value="live">live</option></select>
+      </label>
+      <label class="gvs-field">TWILIO_ACCOUNT_SID <input name="twilio_account_sid" autocomplete="off"></label>
+      <label class="gvs-field">TWILIO_AUTH_TOKEN <input name="twilio_auth_token" type="password" autocomplete="off"></label>
+      <label class="gvs-field">TWILIO_FROM_NUMBER <input name="twilio_from_number" autocomplete="off"></label>
+    </div>
+    <div class="gvs-step" data-step="4">
+      <h2>Branding</h2>
+      <label class="gvs-field">Display name <input name="brand_name" value="ATeam"></label>
+      <label class="gvs-field">Accent color <input name="accent_color" type="color" value="#EDAA4B"></label>
+      <p class="gvs-help">The PNG logo ships with the package. A custom upload is a later change.</p>
+    </div>
+    <div class="gvs-step" data-step="5">
+      <h2>Monthly spend cap</h2>
+      <label class="gvs-field">Cap in USD (0 = paid providers off)
+        <input name="monthly_cap_usd" type="number" min="0" step="0.01" value="0">
+      </label>
+    </div>
+    <div class="gvs-step" data-step="6">
+      <h2>Self-test</h2>
+      <p>This step runs the health check and stub agent before Finish. Finish then saves and shows the green result page.</p>
+      <div id="self-test-result" class="gvs-self-test" hidden></div>
+    </div>
+    <div class="gvs-wizard-actions">
+      <button type="button" class="gvs-btn gvs-btn-ghost" id="prev-btn" hidden>Back</button>
+      <button type="button" class="gvs-btn gvs-btn-primary" id="next-btn">Next</button>
+      <button type="submit" class="gvs-btn gvs-btn-primary" id="finish-btn" hidden>Finish and test</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/setup.js"></script>
+{% endblock %}

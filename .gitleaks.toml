@@ -1,0 +1,16 @@
+title = "ATeam"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fictional demo values and empty credential placeholders"
+paths = [
+  '''\.env\.example$''',
+  '''tests/fixtures/fictional\.py$''',
+  '''deploy/DEPLOY_RECORD\.md$''',
+]
+regexes = [
+  '''example\.test''',
+  '''sk-ant-fictional-test-key''',
+]

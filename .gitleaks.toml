@@ -7,7 +7,7 @@ useDefault = true
 description = "Fictional demo values and empty credential placeholders"
 paths = [
   '''\.env\.example$''',
-  '''tests/.*''',
+  '''tests/fixtures/fictional\.py$''',
   '''deploy/DEPLOY_RECORD\.md$''',
 ]
 regexes = [

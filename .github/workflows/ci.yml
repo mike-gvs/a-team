@@ -64,3 +64,20 @@ jobs:
           gitleaks version
       - name: Run gitleaks
         run: gitleaks detect --source . --no-banner --verbose
+
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bring up from a clean checkout
+        run: |
+          test ! -f .env
+          cp .env.example .env
+          make up
+      - name: Curl /health
+        run: |
+          curl -fsS http://127.0.0.1:8080/health | tee /tmp/health.json
+          python3 -c 'import json; d=json.load(open("/tmp/health.json")); assert d.get("app")=="ok", d'
+      - name: Tear down
+        if: always()
+        run: docker compose down -v --remove-orphans

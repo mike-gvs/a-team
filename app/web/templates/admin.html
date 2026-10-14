@@ -31,12 +31,12 @@
     <div class="gvs-card">
       <h2>API keys</h2>
       <table class="gvs-table">
-        <thead><tr><th>Name</th><th>Prefix</th></tr></thead>
+        <thead><tr><th>Name</th><th>Prefix</th><th>User</th><th>Role</th></tr></thead>
         <tbody>
           {% for k in keys %}
-          <tr><td>{{ k.name }}</td><td><code>{{ k.prefix }}…</code></td></tr>
+          <tr><td>{{ k.name }}</td><td><code>{{ k.prefix }}…</code></td><td>{{ k.created_by }}</td><td>{{ k.role }}</td></tr>
           {% else %}
-          <tr><td colspan="2">No keys yet.</td></tr>
+          <tr><td colspan="4">No keys yet.</td></tr>
           {% endfor %}
         </tbody>
       </table>

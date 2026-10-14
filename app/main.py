@@ -30,10 +30,12 @@ from app.services import (
     complete_setup,
     create_key,
     create_user,
+    ensure_local_admin,
     list_log_rows,
     purge_logs,
     request_password_reset,
     run_agent,
+    run_self_test,
     user_for_api_key,
 )
 from app.settings import REPO_ROOT, Settings, load_settings
@@ -41,6 +43,11 @@ from app.spend import is_capped, month_spend
 
 TEMPLATE_DIR = Path(__file__).resolve().parent / "web" / "templates"
 GVS_UI_VERSION = "0.1.0"
+
+
+class SetupRedirect(Exception):
+    def __init__(self, location: str = "/setup"):
+        self.location = location
 
 
 class SetupIn(BaseModel):
@@ -142,7 +149,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def current_user(request: Request, db: Session) -> dict | None:
         runtime = load_runtime(db, settings)
         if runtime.setup_complete and not runtime.require_login:
-            return {"id": 0, "username": "demo", "role": "admin"}
+            demo = ensure_local_admin(db)
+            db.commit()
+            return {"id": demo.id, "username": demo.username, "role": demo.role}
         sess = request.session.get("user")
         if sess:
             return sess
@@ -161,12 +170,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def require_user(request: Request, db: Session, *, role: str | None = None) -> dict:
         runtime = load_runtime(db, settings)
         if not runtime.setup_complete:
-            raise HTTPException(status_code=302, detail="setup")
+            raise SetupRedirect("/setup")
         user = current_user(request, db)
         if runtime.require_login and not user:
             raise HTTPException(status_code=401, detail="login required")
         if not user:
-            user = {"id": 0, "username": "demo", "role": "admin"}
+            demo = ensure_local_admin(db)
+            db.commit()
+            user = {"id": demo.id, "username": demo.username, "role": demo.role}
         if role == "admin" and user.get("role") != "admin":
             raise HTTPException(status_code=403, detail="admin only")
         return user
@@ -174,6 +185,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.exception_handler(ServiceError)
     async def service_error_handler(_request: Request, exc: ServiceError):
         return JSONResponse({"detail": str(exc)}, status_code=exc.status_code)
+
+    @app.exception_handler(SetupRedirect)
+    async def setup_redirect_handler(_request: Request, exc: SetupRedirect):
+        return RedirectResponse(exc.location, status_code=302)
 
     @app.get("/health")
     def health(db: Session = Depends(db_session)):
@@ -237,6 +252,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/setup")
     def setup_form(
+        request: Request,
         db: Session = Depends(db_session),
         deployment_name: str = Form("ATeam"),
         require_login: str = Form("off"),
@@ -282,21 +298,28 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             },
             secrets=secrets,
         )
-        return RedirectResponse("/", status_code=303)
+        login_on = require_login in {"on", "true", "1"}
+        if login_on and admin_username:
+            admin = db.query(User).filter_by(username=admin_username).first()
+            if admin:
+                request.session["user"] = {
+                    "id": admin.id,
+                    "username": admin.username,
+                    "role": admin.role,
+                }
+        runtime = load_runtime(db, settings)
+        result = run_self_test(db, settings, runtime)
+        return templates.TemplateResponse(
+            "setup_result.html",
+            ctx(request, db, {"self_test": result}),
+        )
 
     @app.get("/api/setup/self-test")
-    def self_test(db: Session = Depends(db_session)):
+    def self_test(request: Request, db: Session = Depends(db_session)):
         runtime = load_runtime(db, settings)
-        checks = []
-        health_payload = build_health(db, settings, runtime)
-        checks.append({"name": "health", "ok": health_payload.get("app") == "ok"})
-        try:
-            completion = run_agent(db, settings, runtime, slug="inbox-clerk", prompt="ping")
-            checks.append({"name": "stub_agent", "ok": bool(completion.text)})
-        except Exception as exc:  # noqa: BLE001 — surface any self-test failure
-            checks.append({"name": "stub_agent", "ok": False, "detail": str(exc)})
-        ok = all(c["ok"] for c in checks)
-        return {"ok": ok, "checks": checks, "green": ok}
+        if runtime.setup_complete:
+            require_user(request, db)
+        return run_self_test(db, settings, runtime)
 
     @app.get("/api/providers")
     def list_providers():
@@ -421,8 +444,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/api/admin/api-keys")
     def api_create_key(payload: KeyIn, request: Request, db: Session = Depends(db_session)):
         actor = require_user(request, db, role="admin")
-        display, row = create_key(db, name=payload.name, created_by=actor["username"])
-        return {"ok": True, "key": display, "prefix": row.prefix}
+        owner = db.query(User).filter_by(id=actor["id"]).first() or ensure_local_admin(db)
+        display, row = create_key(db, name=payload.name, user=owner)
+        return {
+            "ok": True,
+            "key": display,
+            "prefix": row.prefix,
+            "user_id": row.user_id,
+            "role": row.role,
+        }
 
     @app.post("/api/agents/{slug}/messages")
     def agent_message(

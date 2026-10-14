@@ -4,6 +4,8 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.secrets_store import persist_or_read_session_key
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEV_DEFAULT_DB_PASSWORD = "ateam-local-dev"
 PLACEHOLDER_VALUES = frozenset(
@@ -42,6 +44,7 @@ class Settings(BaseSettings):
     config_dir: str = str(REPO_ROOT / "config")
     skills_dir: str = str(REPO_ROOT / "skills")
     prompts_dir: str = str(REPO_ROOT / "prompts")
+    data_dir: str = str(REPO_ROOT / "data")
     session_hours: int = 8
 
     @property
@@ -62,7 +65,7 @@ class Settings(BaseSettings):
             return self.ateam_secret_key
         if self.is_production:
             return ""
-        return "ateam-dev-session-key-not-for-production"
+        return persist_or_read_session_key(self.data_dir)
 
 
 def load_settings() -> Settings:

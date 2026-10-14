@@ -42,6 +42,7 @@ services:
       - ./prompts:/app/prompts
       - ./static:/app/static
       - ./packages:/app/packages
+      - ./data:/app/data
     depends_on:
       postgres:
         condition: service_healthy

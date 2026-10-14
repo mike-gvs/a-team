@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -45,17 +45,10 @@ class ApiKey(Base):
     name: Mapped[str] = mapped_column(String(80))
     prefix: Mapped[str] = mapped_column(String(16), unique=True)
     key_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    role: Mapped[str] = mapped_column(String(20), default="staff")
     created_by: Mapped[str] = mapped_column(String(80), default="admin")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-
-
-class AppSecret(Base):
-    __tablename__ = "app_secrets"
-    __table_args__ = (UniqueConstraint("name", name="uq_app_secret_name"),)
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(80))
-    value: Mapped[str] = mapped_column(Text, default="")
 
 
 class ConnectorState(Base):

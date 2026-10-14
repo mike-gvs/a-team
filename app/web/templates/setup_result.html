@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Self-test · ATeam{% endblock %}
+{% block content %}
+<section class="gvs-wizard" aria-labelledby="self-test-title">
+  <div class="gvs-wizard-head">
+    <img src="/static/img/logo.png" alt="Gold Valley Solutions" class="gvs-logo gvs-logo-lg">
+    <h1 id="self-test-title">Self-test</h1>
+  </div>
+  <div class="gvs-self-test-page {{ 'ok' if self_test.ok else 'fail' }}" data-self-test="{{ 'passed' if self_test.ok else 'failed' }}">
+    <p class="gvs-self-test {{ 'ok' if self_test.ok else 'fail' }}">
+      {% if self_test.ok %}Self-test passed{% else %}Self-test failed{% endif %}
+    </p>
+    <ul>
+      {% for check in self_test.checks %}
+      <li>{{ "✓" if check.ok else "✗" }} {{ check.name }}{% if check.detail %} — {{ check.detail }}{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% if self_test.ok %}
+    <p><a class="gvs-btn gvs-btn-primary" href="/">Open ATeam</a></p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

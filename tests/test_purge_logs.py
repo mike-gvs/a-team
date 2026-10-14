@@ -1,5 +1,6 @@
 from app.models import EmailSink, SpendEvent
 from tests.conftest import complete_wizard
+from tests.fixtures.fictional import ADMIN_PASSWORD
 
 
 def test_purge_logs_truncates_spend_and_email_sink(client):
@@ -8,11 +9,11 @@ def test_purge_logs_truncates_spend_and_email_sink(client):
         require_login=True,
         admin_username="shop-owner",
         admin_email="owner@example.test",
-        admin_password="test-passphrase-ok",
+        admin_password=ADMIN_PASSWORD,
         model_backend="fake-priced",
         monthly_cap_usd=0.01,
     )
-    client.post("/api/login", json={"username": "shop-owner", "password": "test-passphrase-ok"})
+    client.post("/api/login", json={"username": "shop-owner", "password": ADMIN_PASSWORD})
     first = client.post("/api/agents/inbox-clerk/messages", json={"prompt": "one"})
     assert first.status_code == 200
     reset = client.post("/api/password-reset", json={"email": "owner@example.test"})

@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config_loader import connector_entries, load_connectors_config, load_models_config
-from app.models import AppSecret, ConnectorState, InstallState
+from app.models import ConnectorState, InstallState
+from app.secrets_store import read_secrets_file, write_secret
 from app.settings import PLACEHOLDER_VALUES, Settings
 
 
@@ -66,19 +67,12 @@ def secret_value(db: Session, settings: Settings, name: str) -> str:
     env_val = (env_map.get(name) or "").strip()
     if env_val:
         return env_val
-    row = db.query(AppSecret).filter_by(name=name).first()
-    return (row.value if row else "").strip()
+    _ = db  # secrets are stored in data/secrets.env, not Postgres
+    return (read_secrets_file(settings.data_dir).get(name) or "").strip()
 
 
-def set_secret(db: Session, name: str, value: str) -> None:
-    if not value:
-        return
-    row = db.query(AppSecret).filter_by(name=name).first()
-    if row:
-        row.value = value
-    else:
-        db.add(AppSecret(name=name, value=value))
-    db.commit()
+def set_secret(settings: Settings, name: str, value: str) -> None:
+    write_secret(settings.data_dir, name, value)
 
 
 def load_runtime(db: Session, settings: Settings) -> RuntimeConfig:

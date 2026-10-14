@@ -119,7 +119,8 @@ def test_your_data_lists_outbound_hosts():
     assert "only if" in section.lower() or "Only if" in section
     assert "make purge-logs" in section
     assert "make reset-data" in section
-    assert "does not delete" in section.lower() or "does not" in section
+    assert "make clean" in section
+    assert "postgres-data" in section.lower() or "volume" in section.lower()
 
 
 def test_makefile_reset_and_purge():
@@ -130,4 +131,36 @@ def test_makefile_reset_and_purge():
     assert "purge-logs:" in text
     assert "TRUNCATE spend_events, email_sink" in text
     assert "clean:" in text
-    assert "down --remove-orphans" in text
+    clean_block = text.split("clean:")[1].split("reset-data:")[0]
+    assert "down -v" in clean_block
+    assert "--remove-orphans" in text
+    assert "secrets.env" in text
+
+
+def test_inter_is_self_hosted():
+    base = (REPO_ROOT / "app" / "web" / "templates" / "base.html").read_text()
+    assert "fonts.google" not in base
+    assert "fonts.gstatic" not in base
+    assert "cdn.jsdelivr" not in base
+    assert "fonts.css" in base
+    fonts_css = (REPO_ROOT / "packages" / "gvs-ui" / "0.1.0" / "css" / "fonts.css").read_text()
+    assert "@font-face" in fonts_css
+    assert "font-family: Inter" in fonts_css
+    fonts_dir = REPO_ROOT / "packages" / "gvs-ui" / "0.1.0" / "fonts"
+    weights = [p.name for p in fonts_dir.glob("inter-latin-*-normal.woff2")]
+    for weight in ("300", "400", "500", "600", "700"):
+        assert f"inter-latin-{weight}-normal.woff2" in weights
+
+
+def test_ci_compose_job_curls_health():
+    text = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text()
+    assert "make up" in text
+    assert "curl -fsS http://127.0.0.1:8080/health" in text
+    assert "compose:" in text
+
+
+def test_wizard_js_runs_self_test_before_finish():
+    js = (REPO_ROOT / "static" / "js" / "setup.js").read_text()
+    assert "/api/setup/self-test" in js
+    assert "runSelfTest" in js
+    assert "submit" in js

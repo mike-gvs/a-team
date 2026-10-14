@@ -7,6 +7,15 @@ import httpx
 from app.providers.base import Completion, MissingSecretError, ModelProvider
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
+# Claude Sonnet 4.5 list prices (USD per million tokens).
+INPUT_USD_PER_MTOK = 3.0
+OUTPUT_USD_PER_MTOK = 15.0
+
+
+def anthropic_cost_usd(usage: dict) -> float:
+    inp = int(usage.get("input_tokens") or 0)
+    out = int(usage.get("output_tokens") or 0)
+    return round((inp * INPUT_USD_PER_MTOK + out * OUTPUT_USD_PER_MTOK) / 1_000_000, 6)
 
 
 class AnthropicProvider(ModelProvider):
@@ -42,7 +51,8 @@ class AnthropicProvider(ModelProvider):
             for block in data.get("content", [])
             if isinstance(block, dict)
         )
-        return Completion(text=text, cost_usd=0.0, provider=self.id)
+        usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
+        return Completion(text=text, cost_usd=anthropic_cost_usd(usage), provider=self.id)
 
     def reachable(self) -> bool:
         return bool(self.api_key)

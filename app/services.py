@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from secrets import token_urlsafe
 
 from sqlalchemy.orm import Session
 
+from app.health import build_health
 from app.models import (
     ApiKey,
     ConnectorState,
@@ -69,10 +71,12 @@ def complete_setup(
                 role="admin",
             )
         )
+    else:
+        ensure_local_admin(db)
 
     for name, value in (secrets or {}).items():
         if value:
-            set_secret(db, name, value)
+            set_secret(settings, name, value)
 
     if model_backend == "anthropic" and not secret_value(db, settings, "ANTHROPIC_API_KEY"):
         raise ServiceError("Missing required secret: ANTHROPIC_API_KEY")
@@ -142,9 +146,31 @@ def create_user(db: Session, *, username: str, email: str, password: str, role: 
     return user
 
 
-def create_key(db: Session, *, name: str, created_by: str) -> tuple[str, ApiKey]:
+def ensure_local_admin(db: Session) -> User:
+    user = db.query(User).filter_by(username="demo").first()
+    if user:
+        return user
+    user = User(
+        username="demo",
+        email="demo@example.test",
+        password_hash=hash_password(token_urlsafe(24)),
+        role="admin",
+    )
+    db.add(user)
+    db.flush()
+    return user
+
+
+def create_key(db: Session, *, name: str, user: User) -> tuple[str, ApiKey]:
     display, prefix, digest = new_api_key()
-    row = ApiKey(name=name, prefix=prefix, key_hash=digest, created_by=created_by)
+    row = ApiKey(
+        name=name,
+        prefix=prefix,
+        key_hash=digest,
+        user_id=user.id,
+        role=user.role,
+        created_by=user.username,
+    )
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -156,7 +182,20 @@ def user_for_api_key(db: Session, raw: str) -> User | None:
     key = db.query(ApiKey).filter_by(key_hash=digest).first()
     if not key:
         return None
-    return User(id=0, username=key.created_by, email="", password_hash="", role="admin")
+    return db.query(User).filter_by(id=key.user_id).first()
+
+
+def run_self_test(db: Session, settings: Settings, runtime: RuntimeConfig) -> dict:
+    checks: list[dict] = []
+    health_payload = build_health(db, settings, runtime)
+    checks.append({"name": "health", "ok": health_payload.get("app") == "ok"})
+    try:
+        completion = run_agent(db, settings, runtime, slug="inbox-clerk", prompt="ping")
+        checks.append({"name": "stub_agent", "ok": bool(completion.text)})
+    except Exception as exc:  # noqa: BLE001 — surface any self-test failure
+        checks.append({"name": "stub_agent", "ok": False, "detail": str(exc)})
+    ok = all(c["ok"] for c in checks)
+    return {"ok": ok, "checks": checks, "green": ok}
 
 
 def request_password_reset(db: Session, email: str) -> None:

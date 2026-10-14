@@ -15,6 +15,7 @@ COPY prompts ./prompts
 COPY static ./static
 COPY packages ./packages
 COPY VERSION .
+RUN mkdir -p /app/data && chmod 700 /app/data
 
 ENV PYTHONUNBUFFERED=1 \
     VERSION=0.1.0 \

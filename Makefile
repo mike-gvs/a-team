@@ -9,6 +9,7 @@ ENV_FILE := .env
 .PHONY: up down logs test lint clean reset-data purge-logs backup restore self-test wait config
 
 up: $(ENV_FILE)
+	mkdir -p data
 	$(COMPOSE) build
 	$(COMPOSE) up -d
 	$(MAKE) wait
@@ -39,10 +40,10 @@ lint:
 	ruff check app tests scripts
 
 clean:
-	$(COMPOSE) down --remove-orphans
+	$(COMPOSE) down -v --remove-orphans
 	rm -rf data .pytest_cache .ruff_cache
 
-# Wipes the postgres-data volume. `make clean` does not.
+# Wipes the postgres-data volume (same as make clean, with a yes prompt).
 # Non-interactive: CONFIRM=yes make reset-data
 reset-data:
 	@if [ "$${CONFIRM}" = "yes" ]; then \
@@ -62,7 +63,7 @@ purge-logs:
 backup:
 	mkdir -p backups
 	$(COMPOSE) exec -T postgres pg_dump -U $${POSTGRES_USER:-ateam} $${POSTGRES_DB:-ateam} > backups/ateam-latest.sql
-	@echo "Wrote backups/ateam-latest.sql"
+	@echo "Wrote backups/ateam-latest.sql (Postgres only; data/secrets.env and data/session.key are not dumped)"
 
 restore:
 	test -f backups/ateam-latest.sql

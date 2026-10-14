@@ -17,7 +17,7 @@ Self-hosted digital employees that a small business owner runs on their own mach
 
 ## Screenshot
 
-![Setup wizard](release-kit/wizard.png)
+![Wizard self-test passed](release-kit/wizard.png)
 
 ![Home page with Scout](release-kit/home.png)
 
@@ -47,7 +47,7 @@ cp .env.example .env
 make up
 ```
 
-Open [http://127.0.0.1:8080](http://127.0.0.1:8080). The first visit is the setup wizard. Keep the defaults (stub model, login off, connectors stub) and finish. You should land on Scout, a fictional inbox clerk for Maple Street Books.
+Open [http://127.0.0.1:8080](http://127.0.0.1:8080). The first visit is the setup wizard. Keep the defaults (stub model, login off, connectors stub). The last step runs a self-test; Finish saves and leaves you on a green self-test page. From there, open Scout, a fictional inbox clerk for Maple Street Books.
 
 `make up` binds **localhost only** (`HOST_BIND=127.0.0.1`). LAN access: `HOST_BIND=0.0.0.0 make up`. A public tunnel is opt-in: `docker compose --profile tunnel up`.
 
@@ -91,7 +91,7 @@ Delete local data:
 
 - `make purge-logs` — truncates `spend_events` and `email_sink` (same as `POST /api/admin/purge-logs`)
 - `make reset-data` — `docker compose down -v`, after you type `yes`. Removes the `postgres-data` volume (wizard, users, logs, everything in Postgres)
-- `make clean` — stops containers and removes orphans. **It does not delete `postgres-data`.**
+- `make clean` — `docker compose down -v --remove-orphans` and deletes `data/` (session key and wizard secrets file). Same volume wipe as `make reset-data`, without the prompt.
 
 Data already sent to a live provider or connector is under that provider's terms. Review or delete it in their console.
 
@@ -137,9 +137,9 @@ Admin UIs for optional profiles bind localhost only.
 
 ## Backups
 
-See [docs/backup.md](docs/backup.md). `make backup` / `make restore`. Scope is Postgres and config, not secrets. Default schedule: nightly, 7 dailies.
+See [docs/backup.md](docs/backup.md). `make backup` / `make restore`. Scope is Postgres and config, not secrets. Wizard credentials live in `data/secrets.env` (not in Postgres). The session signing key is generated on first run and stored in `data/session.key` when `ATEAM_SECRET_KEY` is empty. Default schedule: nightly, 7 dailies.
 
-`make clean` stops the stack and leaves the `postgres-data` volume in place. To wipe that volume, use `make reset-data` (types `yes` to confirm, or `CONFIRM=yes make reset-data`). To drop only spend and the stub mail sink, use `make purge-logs`. See [Your data](#your-data).
+`make clean` and `make reset-data` both run `docker compose down -v` and remove `postgres-data`. `make reset-data` asks you to type `yes` (or `CONFIRM=yes make reset-data`). To drop only spend and the stub mail sink, use `make purge-logs`. See [Your data](#your-data).
 
 ## Support
 

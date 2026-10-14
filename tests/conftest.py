@@ -27,6 +27,7 @@ def settings(tmp_path: Path) -> Settings:
         version="0.1.0",
         image_tag="0.1.0-test",
         anthropic_api_key="",
+        data_dir=str(tmp_path / "data"),
     )
 
 

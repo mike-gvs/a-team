@@ -2,12 +2,13 @@ from pathlib import Path
 
 import httpx
 import pytest
-from app.providers.anthropic import AnthropicProvider
+from app.providers.anthropic import AnthropicProvider, anthropic_cost_usd
 from app.providers.base import MissingSecretError
 from app.providers.registry import available_providers, build_provider
 from app.providers.stub import StubProvider, extract_signature
 from app.settings import REPO_ROOT
 from tests.conftest import complete_wizard
+from tests.fixtures.fictional import ANTHROPIC_API_KEY
 
 
 def test_provider_order_stub_then_anthropic():
@@ -67,6 +68,45 @@ def test_anthropic_is_not_called_during_stub_flow(client, monkeypatch):
     )
     assert response.status_code == 200
     assert "Scout here" in response.json()["text"]
+
+
+def test_anthropic_cost_from_token_usage():
+    assert anthropic_cost_usd({"input_tokens": 1_000_000, "output_tokens": 1_000_000}) == 18.0
+    assert anthropic_cost_usd({"input_tokens": 0, "output_tokens": 0}) == 0.0
+
+
+def test_anthropic_complete_records_usage_cost(monkeypatch):
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "content": [{"type": "text", "text": "hello from anthropic"}],
+                "usage": {"input_tokens": 1000, "output_tokens": 200},
+            }
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs):
+            del args, kwargs
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def post(self, *args, **kwargs):
+            del args, kwargs
+            return FakeResponse()
+
+    monkeypatch.setattr(httpx, "Client", FakeClient)
+    result = AnthropicProvider(api_key=ANTHROPIC_API_KEY).complete(
+        instructions="x", prompt="y"
+    )
+    assert result.text == "hello from anthropic"
+    assert result.cost_usd == anthropic_cost_usd({"input_tokens": 1000, "output_tokens": 200})
+    assert result.cost_usd > 0
 
 
 def test_build_provider_interface():

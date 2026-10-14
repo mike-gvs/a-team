@@ -30,6 +30,8 @@ from app.services import (
     complete_setup,
     create_key,
     create_user,
+    list_log_rows,
+    purge_logs,
     request_password_reset,
     run_agent,
     user_for_api_key,
@@ -349,6 +351,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 {"to": r.to_addr, "subject": r.subject, "body": r.body} for r in rows
             ]
         }
+
+    @app.get("/api/admin/logs")
+    def admin_logs(request: Request, db: Session = Depends(db_session)):
+        require_user(request, db, role="admin")
+        return list_log_rows(db)
+
+    @app.post("/api/admin/purge-logs")
+    def admin_purge_logs(request: Request, db: Session = Depends(db_session)):
+        require_user(request, db, role="admin")
+        return {"ok": True, **purge_logs(db)}
 
     def _admin_or_redirect(request: Request, db: Session, settings_only: bool = False):
         runtime = load_runtime(db, settings)

@@ -6,7 +6,7 @@ export VERSION IMAGE_TAG
 COMPOSE := docker compose
 ENV_FILE := .env
 
-.PHONY: up down logs test lint clean backup restore self-test wait config
+.PHONY: up down logs test lint clean reset-data purge-logs backup restore self-test wait config
 
 up: $(ENV_FILE)
 	$(COMPOSE) build
@@ -41,6 +41,23 @@ lint:
 clean:
 	$(COMPOSE) down --remove-orphans
 	rm -rf data .pytest_cache .ruff_cache
+
+# Wipes the postgres-data volume. `make clean` does not.
+# Non-interactive: CONFIRM=yes make reset-data
+reset-data:
+	@if [ "$${CONFIRM}" = "yes" ]; then \
+	  $(COMPOSE) down -v --remove-orphans; \
+	else \
+	  echo "This deletes the postgres-data volume (wizard, users, spend, and the email sink)."; \
+	  printf "Type yes to continue: "; \
+	  read -r ans; \
+	  if [ "$$ans" != "yes" ]; then echo "aborted"; exit 1; fi; \
+	  $(COMPOSE) down -v --remove-orphans; \
+	fi
+
+purge-logs:
+	$(COMPOSE) exec -T postgres psql -U $${POSTGRES_USER:-ateam} -d $${POSTGRES_DB:-ateam} \
+	  -c "TRUNCATE spend_events, email_sink RESTART IDENTITY;"
 
 backup:
 	mkdir -p backups

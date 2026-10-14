@@ -21,6 +21,7 @@ def test_readme_skeleton_order():
         "## Run it yourself, or have Gold Valley host and manage it",
         "## AI provider and data handling",
         "## Data and privacy",
+        "## Your data",
         "## What's stubbed",
         "## Configuration",
         "## Architecture",
@@ -102,3 +103,31 @@ def test_backup_docs():
     text = (REPO_ROOT / "docs" / "backup.md").read_text()
     assert "nightly" in text.lower()
     assert "restore" in text.lower()
+    assert "make reset-data" in text
+    assert "make purge-logs" in text
+
+
+def test_your_data_lists_outbound_hosts():
+    section = README.split("## Your data", 1)[1].split("## ", 1)[0]
+    for host in (
+        "api.anthropic.com",
+        "api.postmarkapp.com",
+        "api.twilio.com",
+        "trycloudflare.com",
+    ):
+        assert host in section
+    assert "only if" in section.lower() or "Only if" in section
+    assert "make purge-logs" in section
+    assert "make reset-data" in section
+    assert "does not delete" in section.lower() or "does not" in section
+
+
+def test_makefile_reset_and_purge():
+    text = (REPO_ROOT / "Makefile").read_text()
+    assert "reset-data:" in text
+    assert "down -v" in text
+    assert "Type yes to continue" in text
+    assert "purge-logs:" in text
+    assert "TRUNCATE spend_events, email_sink" in text
+    assert "clean:" in text
+    assert "down --remove-orphans" in text

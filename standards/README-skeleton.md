@@ -12,11 +12,12 @@ Use this heading order in every product README:
 8. ## Run it yourself, or have Gold Valley host and manage it
 9. ## AI provider and data handling
 10. ## Data and privacy
-11. ## What's stubbed
-12. ## Configuration
-13. ## Architecture
-14. ## Profiles and RAM
-15. ## Backups
-16. ## Support
-17. ## License
-18. Gold Valley footer
+11. ## Your data
+12. ## What's stubbed
+13. ## Configuration
+14. ## Architecture
+15. ## Profiles and RAM
+16. ## Backups
+17. ## Support
+18. ## License
+19. Gold Valley footer

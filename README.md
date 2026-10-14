@@ -70,6 +70,31 @@ The setup wizard is where you pick the AI provider. **Prompts and data go to whi
 
 Working with health records? When you run a project yourself, you choose an AI provider and host that fit your compliance needs. Our hosting and builds don't process patient health information.
 
+## Your data
+
+ATeam stays on this machine unless you turn something on. Outbound hosts, when they apply:
+
+| Destination | When it is contacted | Host |
+|---|---|---|
+| Chosen AI provider | Only if you pick a live provider in the wizard. Stub makes no network calls. | Anthropic: `api.anthropic.com` |
+| Postmark | Only if the email connector is enabled and set to live | `api.postmarkapp.com` |
+| Twilio | Only if the SMS connector is enabled and set to live | `api.twilio.com` |
+| Cloudflare | Only with `docker compose --profile tunnel up` | Cloudflare's edge (`trycloudflare.com` and the cloudflared tunnel endpoints) |
+
+Review what this install has stored:
+
+- Spend vs cap: `/admin` and `GET /health` (`spend`)
+- Stub mail (password-reset sink): `GET /api/email-sink` or `GET /api/admin/logs` (admin)
+- Setup, users, and connector state: `/admin` and `/admin/settings`
+
+Delete local data:
+
+- `make purge-logs` — truncates `spend_events` and `email_sink` (same as `POST /api/admin/purge-logs`)
+- `make reset-data` — `docker compose down -v`, after you type `yes`. Removes the `postgres-data` volume (wizard, users, logs, everything in Postgres)
+- `make clean` — stops containers and removes orphans. **It does not delete `postgres-data`.**
+
+Data already sent to a live provider or connector is under that provider's terms. Review or delete it in their console.
+
 ## What's stubbed
 
 | Piece | Default | Live option |
@@ -113,6 +138,8 @@ Admin UIs for optional profiles bind localhost only.
 ## Backups
 
 See [docs/backup.md](docs/backup.md). `make backup` / `make restore`. Scope is Postgres and config, not secrets. Default schedule: nightly, 7 dailies.
+
+`make clean` stops the stack and leaves the `postgres-data` volume in place. To wipe that volume, use `make reset-data` (types `yes` to confirm, or `CONFIRM=yes make reset-data`). To drop only spend and the stub mail sink, use `make purge-logs`. See [Your data](#your-data).
 
 ## Support
 

@@ -4,7 +4,16 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
-from app.models import ApiKey, ConnectorState, DemoRecord, EmailSink, InstallState, PasswordReset, User
+from app.models import (
+    ApiKey,
+    ConnectorState,
+    DemoRecord,
+    EmailSink,
+    InstallState,
+    PasswordReset,
+    SpendEvent,
+    User,
+)
 from app.providers.base import Completion
 from app.providers.registry import build_provider
 from app.providers.stub import StubProvider
@@ -187,6 +196,28 @@ def apply_password_reset(db: Session, token: str, new_password: str) -> None:
     user.password_hash = hash_password(new_password)
     db.delete(row)
     db.commit()
+
+
+def purge_logs(db: Session) -> dict[str, int]:
+    spend = db.query(SpendEvent).delete()
+    mail = db.query(EmailSink).delete()
+    db.commit()
+    return {"spend_events": spend, "email_sink": mail}
+
+
+def list_log_rows(db: Session, *, limit: int = 50) -> dict:
+    spend = (
+        db.query(SpendEvent).order_by(SpendEvent.id.desc()).limit(limit).all()
+    )
+    mail = db.query(EmailSink).order_by(EmailSink.id.desc()).limit(limit).all()
+    return {
+        "spend_events": [
+            {"id": r.id, "provider": r.provider, "amount_usd": r.amount_usd} for r in spend
+        ],
+        "email_sink": [
+            {"id": r.id, "to": r.to_addr, "subject": r.subject, "body": r.body} for r in mail
+        ],
+    }
 
 
 def run_agent(
